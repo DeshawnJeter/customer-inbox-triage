@@ -1,10 +1,8 @@
-import { SCHEMA_VERSION } from './schema'
+import { MAX_LENGTH, SCHEMA_VERSION } from './schema'
 import { MODEL, classifyWithLLM } from './classify/llm'
 import { classifyWithRules } from './classify/fallback'
 import { calculateUrgency } from './urgency'
 import { getRecommendedAction } from './policy'
-
-const MAX_LENGTH = 5000
 
 export class TriageError extends Error {
   constructor(code, message) {

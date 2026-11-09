@@ -9,3 +9,6 @@ export const CATEGORIES = [
 export const URGENCY_LEVELS = ['High', 'Medium', 'Low']
 
 export const SCHEMA_VERSION = 2
+
+// Longest message accepted by the app and by the server route.
+export const MAX_LENGTH = 5000

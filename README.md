@@ -11,9 +11,9 @@ Support teams spend time reading and sorting incoming messages by hand. This too
 ## Tech Stack
 
 - **Frontend:** React, Vite, Tailwind CSS, React Router
-- **AI:** Groq API, model `openai/gpt-oss-20b`
+- **AI:** Groq API, model `openai/gpt-oss-20b`, called from a server route
 - **Storage:** Browser `localStorage`
-- **Runtime:** Browser only, intended for local development
+- **Runtime:** Vite dev server or preview server. The Groq key stays on the server.
 
 ## Setup
 
@@ -38,7 +38,7 @@ Support teams spend time reading and sorting incoming messages by hand. This too
    npm install
    ```
 
-3. Add your Groq API key. Copy the example file, then set the key in the copy:
+3. Add your Groq API key. Copy the example file, then set the key in the copy. The key is read on the server only:
 
    ```bash
    cp .env.example .env.local
@@ -47,10 +47,10 @@ Support teams spend time reading and sorting incoming messages by hand. This too
    In `.env.local`:
 
    ```
-   VITE_GROQ_API_KEY=your-groq-api-key
+   GROQ_API_KEY=your-groq-api-key
    ```
 
-   `.env.local` is ignored by Git. Never commit a real key.
+   `.env.local` is ignored by Git. Never commit a real key, and do not rename the variable to start with `VITE_`, because that would bundle it into the browser code.
 
 4. Start the development server:
 
@@ -72,7 +72,7 @@ Support teams spend time reading and sorting incoming messages by hand. This too
 
 1. **Paste.** The user enters a message on the Analyze page.
 2. **Validate.** Empty messages are rejected with a message. Messages over 5,000 characters are rejected.
-3. **Classify.** The app sends the message to the model with the allowed categories. The request asks for JSON output at temperature 0. The reply must be valid JSON with a known category.
+3. **Classify.** The browser posts the message to `/api/classify`. The server route sends it to the model with the allowed categories, asks for JSON output at temperature 0, and checks the reply for a known category. The key never leaves the server.
 4. **Fall back if needed.** If the API call fails, times out, or returns an invalid reply, a keyword classifier chooses the category. The result shows a "Keyword fallback used" notice and records the reason.
 5. **Score urgency.** A rule-based scorer reads the message text only. Severity words such as "down", "outage", or "lost" raise urgency. Polite or positive wording lowers it.
 6. **Recommend.** A policy table maps category and urgency to a next step.
@@ -139,18 +139,21 @@ The dashboard won't load when I try to access it. I've tried refreshing but it k
 
 ## Troubleshooting
 
-- **Every result shows "Keyword fallback used".** Check that `VITE_GROQ_API_KEY` is set in `.env.local` and that you restarted `npm run dev` after adding it. Also check the browser console for a 401 (bad key) or 404 (model no longer available) response.
+- **Every result shows "Keyword fallback used".** Check that `GROQ_API_KEY` is set in `.env.local` and that you restarted `npm run dev` after adding it. Calling `/api/classify` directly returns 503 with `not_configured` when the key is missing, and 502 when Groq fails or returns an unexpected reply. The server log shows the error type only.
 - **Blank page on load.** Make sure the dev server was restarted after the key was added. The app itself no longer requires a key to render.
 - **Results look different from earlier runs.** The category comes from the model, which can change when the provider updates it. Urgency and the next step do not.
 
-## Security Note
+## Security
 
-The app calls Groq from the browser (`dangerouslyAllowBrowser: true`), and Vite exposes any `VITE_` variable in the built bundle. That makes the key visible to anyone who can open the page. This setup is for local development and assessment only. For any real deployment, move the model call to a backend route and keep the key on the server.
+- **API key on the server.** The Groq key is read from `GROQ_API_KEY` in the Vite config and used only by `server/classifyRoute.js`. It is not bundled into the browser code. A check of the production build found no key material.
+- **Input limits.** The route rejects empty messages, messages over 5,000 characters, and request bodies over 16 KB (413).
+- **Responses.** The route sends no-store caching headers and `X-Content-Type-Options: nosniff`. Error responses carry a code, never upstream error text or the key.
+- **Logging.** The server logs the error type only, never the message text or the key.
+- **Dependencies.** `npm audit --omit=dev` reports 0 vulnerabilities.
 
-## Models and Limits
+### Remaining limits
 
-The model name is set in `src/triage/classify/llm.js`. Groq changes which models it serves over time, so check its model list if requests start returning 404. Check https://console.groq.com for current free-tier limits before relying on them.
+- The route has no authentication or rate limiting. It is meant for a single developer machine or a trusted network. Before a shared deployment, add auth and per-user rate limits.
+- Messages and results are stored in browser `localStorage`. They contain customer data, so clear the history on shared machines.
+- The `npm run dev` and `npm run preview` servers serve the route. A production deployment needs a server that serves the same route, with its own limits and secret management.
 
-## License
-
-This project is for educational purposes only.
