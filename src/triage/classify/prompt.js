@@ -1,5 +1,5 @@
 // Model settings and prompt shared by the server route. No browser-only code here.
-import { CATEGORIES } from '../schema'
+import { CATEGORIES } from '../schema.js'
 
 export const MODEL = 'openai/gpt-oss-20b'
 export const TIMEOUT_MS = 8000

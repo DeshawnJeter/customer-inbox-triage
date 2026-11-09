@@ -1,19 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 
+// Read the saved history from storage.
+function readHistory() {
+  return JSON.parse(localStorage.getItem('triageHistory') || '[]')
+}
+
 function HistoryPage() {
-  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState(readHistory)
   const [filter, setFilter] = useState('all')
   const [expandedIndex, setExpandedIndex] = useState(null)
-
-  useEffect(() => {
-    loadHistory()
-  }, [])
-
-  const loadHistory = () => {
-    const savedHistory = JSON.parse(localStorage.getItem('triageHistory') || '[]')
-    setHistory(savedHistory)
-  }
 
   const clearHistory = () => {
     if (window.confirm('Are you sure you want to clear all history?')) {

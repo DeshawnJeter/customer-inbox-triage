@@ -8,7 +8,7 @@ export default defineConfig([
   globalIgnores(['dist']),
   {
     // Build and server code runs in Node, not the browser.
-    files: ['vite.config.js', 'server/**/*.js'],
+    files: ['vite.config.js', 'api/**/*.js', 'server/**/*.js'],
     languageOptions: { globals: globals.node },
   },
   {
