@@ -38,28 +38,7 @@ Support teams spend time reading and sorting incoming messages by hand. This too
    npm install
    ```
 
-3. Add your Groq API key. Copy the example file, then set the key in the copy. The key is read on the server only:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   In `.env.local`:
-
-   ```
-   GROQ_API_KEY=your-groq-api-key
-   ```
-
-   Also set the access credentials that protect the classification route. The app will not classify messages until both are set:
-
-   ```
-   TRIAGE_USERNAME=choose-a-username
-   TRIAGE_PASSWORD=choose-a-long-random-password
-   ```
-
-   `.env.local` is ignored by Git. Never commit a real key or password, and do not rename the variable to start with `VITE_`, because that would bundle it into the browser code.
-
-4. Start the development server:
+3. Start the development server:
 
    ```bash
    npm run dev
