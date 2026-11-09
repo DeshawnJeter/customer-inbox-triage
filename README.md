@@ -50,7 +50,14 @@ Support teams spend time reading and sorting incoming messages by hand. This too
    GROQ_API_KEY=your-groq-api-key
    ```
 
-   `.env.local` is ignored by Git. Never commit a real key, and do not rename the variable to start with `VITE_`, because that would bundle it into the browser code.
+   Also set the access credentials that protect the classification route. The app will not classify messages until both are set:
+
+   ```
+   TRIAGE_USERNAME=choose-a-username
+   TRIAGE_PASSWORD=choose-a-long-random-password
+   ```
+
+   `.env.local` is ignored by Git. Never commit a real key or password, and do not rename the variable to start with `VITE_`, because that would bundle it into the browser code.
 
 4. Start the development server:
 
@@ -140,20 +147,65 @@ The dashboard won't load when I try to access it. I've tried refreshing but it k
 ## Troubleshooting
 
 - **Every result shows "Keyword fallback used".** Check that `GROQ_API_KEY` is set in `.env.local` and that you restarted `npm run dev` after adding it. Calling `/api/classify` directly returns 503 with `not_configured` when the key is missing, and 502 when Groq fails or returns an unexpected reply. The server log shows the error type only.
+- **Browser keeps asking for a password.** Check that `TRIAGE_USERNAME` and `TRIAGE_PASSWORD` are set and that you restarted the server after setting them. A 503 with `auth_not_configured` means they are missing.
+- **Results stop with an error after many requests.** The route allows 20 requests per minute per address. Wait a minute, or raise the limit in `server/classifyRoute.js`.
 - **Blank page on load.** Make sure the dev server was restarted after the key was added. The app itself no longer requires a key to render.
 - **Results look different from earlier runs.** The category comes from the model, which can change when the provider updates it. Urgency and the next step do not.
+
+## Deploying to Vercel (free Hobby plan)
+
+The app deploys as a static Vite site, and `api/classify.js` runs as a Vercel serverless function at `/api/classify`.
+
+The Hobby plan is free. Do not add a paid plan or a trial. Hobby use is limited to non-commercial projects.
+
+1. Install the CLI and log in in your browser:
+
+   ```bash
+   npx vercel login
+   ```
+
+2. Create the project from this folder:
+
+   ```bash
+   npx vercel link
+   ```
+
+3. Add the three secrets. Each command prompts for the value, so they are not stored in Git or shown in shell history:
+
+   ```bash
+   npx vercel env add GROQ_API_KEY production
+   npx vercel env add TRIAGE_USERNAME production
+   npx vercel env add TRIAGE_PASSWORD production
+   ```
+
+4. Deploy to production:
+
+   ```bash
+   npx vercel --prod
+   ```
+
+Vercel gives every deployment HTTPS. The site itself is public, but the classification route requires the username and password, and the site holds no customer data.
+
+### Limits on the free plan
+
+- **Rate limit is per instance.** The 20-requests-per-minute limit is held in memory. Vercel can run several instances, and each keeps its own count, so the real limit is higher than 20. For a strict limit, add a Vercel Firewall rate-limit rule in the project dashboard, or a shared store.
+- **Function time and usage caps** apply to Hobby. Check the usage page in the dashboard.
 
 ## Security
 
 - **API key on the server.** The Groq key is read from `GROQ_API_KEY` in the Vite config and used only by `server/classifyRoute.js`. It is not bundled into the browser code. A check of the production build found no key material.
+- **Access control.** `POST /api/classify` requires HTTP Basic credentials set in `TRIAGE_USERNAME` and `TRIAGE_PASSWORD`. The browser shows a login prompt the first time. The comparison is constant-time. If either variable is missing, the route returns 503 and does nothing.
+- **Rate limit.** Each client address gets 20 requests per minute. Requests over the limit get 429 with a `Retry-After` header.
 - **Input limits.** The route rejects empty messages, messages over 5,000 characters, and request bodies over 16 KB (413).
 - **Responses.** The route sends no-store caching headers and `X-Content-Type-Options: nosniff`. Error responses carry a code, never upstream error text or the key.
 - **Logging.** The server logs the error type only, never the message text or the key.
 - **Dependencies.** `npm audit --omit=dev` reports 0 vulnerabilities.
 
-### Remaining limits
+### Hosting rules
 
-- The route has no authentication or rate limiting. It is meant for a single developer machine or a trusted network. Before a shared deployment, add auth and per-user rate limits.
-- Messages and results are stored in browser `localStorage`. They contain customer data, so clear the history on shared machines.
-- The `npm run dev` and `npm run preview` servers serve the route. A production deployment needs a server that serves the same route, with its own limits and secret management.
+- **Do not expose `npm run dev` to a network.** It is a development server. Bind it to localhost only, which is the default.
+- For other people to use the tool, serve the built app and the route from a server behind HTTPS (for example, a reverse proxy in front of `npm run preview` or an equivalent Node server). Set `TRIAGE_USERNAME`, `TRIAGE_PASSWORD`, and `GROQ_API_KEY` as server environment variables, not in files committed to Git.
+- The rate limit counts the address the connection comes from. Behind a reverse proxy, every user shares the proxy address, so the limit must be applied at the proxy or the proxy address must be trusted explicitly.
+- Basic credentials are sent with every request. Use HTTPS, or anyone on the network can read them.
+- Messages and results are stored in each user's browser `localStorage`. They contain customer data, so clear the history on shared machines.
 
