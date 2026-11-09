@@ -46,28 +46,28 @@ function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-4 sm:gap-4">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Total Messages</div>
-            <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+            <div className="text-2xl font-bold text-blue-600 sm:text-3xl">{stats.total}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Today</div>
-            <div className="text-3xl font-bold text-green-600">{stats.today}</div>
+            <div className="text-2xl font-bold text-green-600 sm:text-3xl">{stats.today}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">High Urgency</div>
-            <div className="text-3xl font-bold text-red-600">{stats.highUrgencyPercent}%</div>
+            <div className="text-2xl font-bold text-red-600 sm:text-3xl">{stats.highUrgencyPercent}%</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Avg Per Day</div>
-            <div className="text-3xl font-bold text-purple-600">{stats.avgPerDay}</div>
+            <div className="text-2xl font-bold text-purple-600 sm:text-3xl">{stats.avgPerDay}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Category Distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Category Distribution</h2>
             {categoryData.length === 0 ? (
               <div className="text-center text-gray-500 py-8">No data yet</div>
@@ -95,7 +95,7 @@ function DashboardPage() {
           </div>
 
           {/* Urgency Breakdown */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Urgency Breakdown</h2>
             {stats.total === 0 ? (
               <div className="text-center text-gray-500 py-8">No data yet</div>
