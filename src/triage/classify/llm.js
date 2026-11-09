@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk'
 import { CATEGORIES } from '../schema'
 
-export const MODEL = 'llama-3.3-70b-versatile'
+export const MODEL = 'openai/gpt-oss-20b'
 const TIMEOUT_MS = 8000
 
 let client = null
