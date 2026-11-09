@@ -1,51 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
-function DashboardPage() {
-  const [stats, setStats] = useState({
-    total: 0,
-    today: 0,
-    highUrgencyPercent: 0,
-    avgPerDay: 0
+// Build all dashboard figures from the saved history.
+function computeDashboard() {
+  const history = JSON.parse(localStorage.getItem('triageHistory') || '[]')
+  const today = new Date().toDateString()
+  const todayMessages = history.filter(item =>
+    new Date(item.timestamp).toDateString() === today
+  )
+
+  const highUrgency = history.filter(h => h.urgency === 'High').length
+  const totalDays = history.length > 0 ? 7 : 1
+
+  const categories = {}
+  history.forEach(item => {
+    categories[item.category] = (categories[item.category] || 0) + 1
   })
-  const [categoryData, setCategoryData] = useState([])
-  const [urgencyData, setUrgencyData] = useState({ High: 0, Medium: 0, Low: 0 })
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
+  const urgency = { High: 0, Medium: 0, Low: 0 }
+  history.forEach(item => {
+    urgency[item.urgency] = (urgency[item.urgency] || 0) + 1
+  })
 
-  const loadDashboardData = () => {
-    const history = JSON.parse(localStorage.getItem('triageHistory') || '[]')
-    const today = new Date().toDateString()
-    const todayMessages = history.filter(item => 
-      new Date(item.timestamp).toDateString() === today
-    )
-
-    // Calculate stats
-    const highUrgency = history.filter(h => h.urgency === 'High').length
-    const totalDays = history.length > 0 ? 7 : 1
-    
-    setStats({
+  return {
+    stats: {
       total: history.length,
       today: todayMessages.length,
       highUrgencyPercent: history.length > 0 ? Math.round((highUrgency / history.length) * 100) : 0,
-      avgPerDay: Math.round(history.length / totalDays)
-    })
-
-    // Category distribution
-    const categories = {}
-    history.forEach(item => {
-      categories[item.category] = (categories[item.category] || 0) + 1
-    })
-    setCategoryData(Object.entries(categories).map(([name, count]) => ({ name, count })))
-
-    // Urgency breakdown
-    const urgency = { High: 0, Medium: 0, Low: 0 }
-    history.forEach(item => {
-      urgency[item.urgency] = (urgency[item.urgency] || 0) + 1
-    })
-    setUrgencyData(urgency)
+      avgPerDay: Math.round(history.length / totalDays),
+    },
+    categoryData: Object.entries(categories).map(([name, count]) => ({ name, count })),
+    urgencyData: urgency,
   }
+}
+
+function DashboardPage() {
+  // Computed once, when the page first renders.
+  const [{ stats, categoryData, urgencyData }] = useState(computeDashboard)
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -56,28 +46,28 @@ function DashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-2 gap-3 mb-8 sm:grid-cols-4 sm:gap-4">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Total Messages</div>
-            <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
+            <div className="text-2xl font-bold text-blue-600 sm:text-3xl">{stats.total}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Today</div>
-            <div className="text-3xl font-bold text-green-600">{stats.today}</div>
+            <div className="text-2xl font-bold text-green-600 sm:text-3xl">{stats.today}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">High Urgency</div>
-            <div className="text-3xl font-bold text-red-600">{stats.highUrgencyPercent}%</div>
+            <div className="text-2xl font-bold text-red-600 sm:text-3xl">{stats.highUrgencyPercent}%</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="text-sm text-gray-600 mb-1">Avg Per Day</div>
-            <div className="text-3xl font-bold text-purple-600">{stats.avgPerDay}</div>
+            <div className="text-2xl font-bold text-purple-600 sm:text-3xl">{stats.avgPerDay}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Category Distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Category Distribution</h2>
             {categoryData.length === 0 ? (
               <div className="text-center text-gray-500 py-8">No data yet</div>
@@ -105,7 +95,7 @@ function DashboardPage() {
           </div>
 
           {/* Urgency Breakdown */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Urgency Breakdown</h2>
             {stats.total === 0 ? (
               <div className="text-center text-gray-500 py-8">No data yet</div>
