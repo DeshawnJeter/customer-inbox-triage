@@ -35,23 +35,7 @@ Support teams waste time manually reading and triaging customer messages. This t
    npm install
    ```
 
-3. **Configure Groq API Key**
-   
-   Create a `.env.local` file in the root directory:
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Edit `.env.local` and add your Groq API key:
-   ```
-   VITE_GROQ_API_KEY=gsk_your-actual-key-here
-   ```
-   
-   Get your FREE API key from: https://console.groq.com/keys
-   
-   **Why Groq?** Groq offers a generous free tier with fast inference and no credit card required!
-
-4. **Run the application**
+3. **Run the application**
    ```bash
    npm run dev
    ```
