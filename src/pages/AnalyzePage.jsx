@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { categorizeMessage } from '../utils/llmHelper'
-import { calculateUrgency } from '../utils/urgencyScorer'
-import { getRecommendedAction } from '../utils/templates'
+import { triage, TriageError } from '../triage/orchestrator'
+import { appendRecord } from '../store/historyStore'
 
 function AnalyzePage() {
   const [message, setMessage] = useState('')
@@ -28,33 +27,16 @@ function AnalyzePage() {
     setResults(null)
     
     try {
-      // Run categorization (LLM call)
-      const { category, reasoning } = await categorizeMessage(message)
-      
-      // Calculate urgency (rule-based)
-      const urgency = calculateUrgency(message)
-      
-      // Get recommended action (template-based)
-      const recommendedAction = getRecommendedAction(category)
-      
-      const analysisResult = {
-        message,
-        category,
-        urgency,
-        recommendedAction,
-        reasoning,
-        timestamp: new Date().toISOString()
-      }
-
-      setResults(analysisResult)
-
-      // Save to history
-      const history = JSON.parse(localStorage.getItem('triageHistory') || '[]')
-      history.push(analysisResult)
-      localStorage.setItem('triageHistory', JSON.stringify(history))
+      const record = await triage(message)
+      setResults(record)
+      appendRecord(record)
     } catch (error) {
-      console.error('Error analyzing message:', error)
-      alert('Error analyzing message. Please try again.')
+      if (error instanceof TriageError) {
+        alert(error.message)
+      } else {
+        console.error('Error analyzing message:', error)
+        alert('Error analyzing message. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -129,6 +111,12 @@ function AnalyzePage() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Analysis Results</h2>
             
+            {results.classifier === 'fallback' && (
+              <div role="status" className="mb-4 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg p-3 text-sm">
+                <strong>Keyword fallback used.</strong> The AI classifier did not answer, so this category comes from keyword rules and should be checked.
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <div className="text-sm font-semibold text-gray-600 mb-1">Category</div>
